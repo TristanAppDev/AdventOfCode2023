@@ -1,54 +1,60 @@
-use std::{
-    collections::HashMap,
-    fs::File,
-    io::{self, BufRead},
-    path::Path,
-};
+use std::fs::read_to_string;
 
 fn main() {
-    let digit_map: HashMap<&str, &str> = HashMap::from([
-        ("one", "1"),
-        ("two", "2"),
-        ("three", "3"),
-        ("four", "4"),
-        ("five", "5"),
-        ("six", "6"),
-        ("seven", "7"),
-        ("eight", "8"),
-        ("nine", "9"),
-    ]);
+    let lines = read_lines("data.txt");
 
-    let mut result: u32 = 0;
-
-    if let Ok(lines) = read_lines("data.txt".to_owned()) {
-        for line in lines {
-            if let Ok(cv) = line {
-                replace_words_with_nums(digit_map.clone(), cv.clone());
-                result += get_val_of_first_and_last(cv)
-            }
-        }
-    }
+    let result = lines.into_iter().map(process_line).sum::<u32>();
 
     println!("{}", result);
 }
 
-fn replace_words_with_nums(digit_map: HashMap<&str, &str>, text: String) -> String {
-    let mut result: String = String::from("");
-    for digit in digit_map {
-        result = text.replace(digit.0, digit.1);
-    }
+fn process_line(line: String) -> u32 {
+    let mut line = (0..line.len()).filter_map(|index| filter_and_map(&line, index));
 
-    result.to_string()
+    let first = match line.next() {
+        Some(n) => n,
+        None => 0,
+    };
+
+    let last = match line.last() {
+        Some(n) => n,
+        None => first,
+    };
+
+    first * 10 + last
 }
 
-fn get_val_of_first_and_last(line: String) -> u32 {
-    return 0;
+fn filter_and_map(line: &str, index: usize) -> Option<u32> {
+    let cleaned_line = &line[index..];
+
+    let result = if cleaned_line.starts_with("one") {
+        '1'
+    } else if cleaned_line.starts_with("two") {
+        '2'
+    } else if cleaned_line.starts_with("three") {
+        '3'
+    } else if cleaned_line.starts_with("four") {
+        '4'
+    } else if cleaned_line.starts_with("five") {
+        '5'
+    } else if cleaned_line.starts_with("six") {
+        '6'
+    } else if cleaned_line.starts_with("seven") {
+        '7'
+    } else if cleaned_line.starts_with("eight") {
+        '8'
+    } else if cleaned_line.starts_with("nine") {
+        '9'
+    } else {
+        cleaned_line.chars().next().unwrap()
+    };
+    result.to_digit(10)
 }
 
-fn read_lines<T>(filename: T) -> io::Result<io::Lines<io::BufReader<File>>>
-where
-    T: AsRef<Path>,
-{
-    let file = File::open(filename)?;
-    Ok(io::BufReader::new(file).lines())
+fn read_lines(filename: &str) -> Vec<String> {
+    read_to_string(filename)
+        .unwrap()
+        .lines()
+        .map(|s| String::from(s))
+        .collect::<Vec<String>>()
 }
